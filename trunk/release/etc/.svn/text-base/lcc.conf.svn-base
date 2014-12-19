@@ -1,0 +1,31 @@
+log_level=4
+r_log_path=/data/log/xFenguang/backup/today/lcc/
+w_log_path=/data/log/xFenguang/backup/today/lcc/
+prefix=lcc
+
+;The mysql database configure
+;http configure
+
+server=0.0.0.0
+listen=9000
+connect_timeout=180
+
+;服务器地址
+db_host=0.0.0.0
+
+;数据库名称
+db_name=cc_cachedb
+
+;数据库用户
+db_user=cache_user
+
+;数据库用户密码
+db_passwd=cache_user_10050
+
+;数据库端口
+db_port=3306
+
+;数据库查询编码
+db_charset=utf8
+
+tb_names=data

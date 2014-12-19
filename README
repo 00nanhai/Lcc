@@ -1,0 +1,175 @@
+一、依赖环境
+1.mysql 5.1.73
+2.libevent2.0.1
+3.boost_1.45
+
+
+二、编译
+cd trunk/src/
+makefile中打开-D_SW_DEBUG_宏启动debug模式
+make
+
+
+三、运行
+-c 后跟配置文件路径
+-v 查看版本信息
+如:
+./lcc -c ../etc/lcc.cof
+
+
+四、配置文件
+ g_level=4#日志文件基本1~4
+
+ ;日志文件的路径
+ r_log_path=/data/log/backup/today/lcc/
+ w_log_path=/data/log/backup/today/lcc/
+ ;日志文件名的前缀
+ prefix=lcc
+ 
+ ;The mysql database configure
+ ;http configure
+ 
+ ;数据库ip
+ server=0.0.0.0
+ ;数据库端口
+ listen=9000
+ ;数据库超时
+ connect_timeout=180
+ 
+ ;服务器地址
+ db_host=0.0.0.0
+ 
+ ;数据库名称
+ db_name=cc_cachedb
+ 
+ ;数据库用户
+ db_user=cache_user
+ 
+ ;数据库用户密码
+ db_passwd=cache_user_10050
+ 
+ ;数据库端口
+ db_port=3306
+ 
+ ;数据库查询编码
+ db_charset=utf8
+ 
+ tb_names=data
+
+
+五、外部接口
+
+
+
+支持请求类型
+操作码
+	GET_CKEY				0
+    SET_CKEY				1
+    GET_CURL				2
+    SET_CURL				3
+    DEL_CURL				4
+    DUMP_HOST_RECORDS	5
+    CREATE_B_FILE			6
+    GET_FILE,				7
+    GET_CKEY_BY_ID		8
+    SET_CURL_HAVE_ID		9[已废弃]
+    LCC_REQ_COUNT		10
+CHECK_A_FILE			11
+GET_RESOURCE_SIZE   12
+操作码建议使用枚举类型，支持的请求类型操作码将来可能会变。
+
+2.请求url格式
+http:// + ip地址 + 端口 + /lcc.php?operation= + 操作码 + 参数
+如：
+"http://122.72.1.163:9000/lcc.php?operation=0&wurl=$wurl&tb_name=data"
+
+3.	通过wurl获取ckey.
+格式如下：
+"http://$ip:9000/lcc.php?operation=0&wurl=$wurl&tb_name=data"
+返回值：
+成功：返回ckey字符串，长度为32字节
+失败：若程序某种原因执行失败返回”FAIL”,没有查询出来返回”NULL”
+
+4.设置ckey
+目前不支持，由历史遗留，暂时没有删除。
+
+5.查询curl
+格式如下：
+"http://$ip:9000/lcc.php?operation=2&ckey=$ckey&tb_name=data"
+返回值：
+成功：若只有一个curl 返回curl| 若多个curl返回curl|curl|... [改为host^curl^host^curl ...]
+失败：若程序某种原因执行失败返回”FAIL”,没有查询出来返回”NULL”
+
+6.插入curl
+格式如下：
+"http://$ip:9000/lcc.php?operation=3&wurl=$wurl&ckey=$ckey&curl=$curl&host=$host&size=$size&hash=$hash&tb_name=data"
+（注：目前系统中，只使用data表，hash字段没有起任何作用）
+返回值
+成功：返回”Successfully insert data into the database”
+失败：插入数据错误返回”exec insert sql failed .”，若数据库中已经存在返回”This wurl record has exist in the database”
+
+7.删除curl
+格式如下：
+"http://$ip:9000/lcc.php?operation=4&curl=$curl&hash=$hash&tb_name=data"
+（注：目前系统中，只使用data表，hash字段没有起任何作用）
+返回值
+成功：返回"Deleted successfully."
+失败：若删除数据不存在返回"To delete data in the database does not exist, delete failed."，其他异常"Deleted Failed :" + 错误信息。
+
+8.获取hostdump文件
+格式如下：
+"http://$ip:9000/lcc.php?operation=5&host=$ip&tb_name=data"
+返回值
+成功：直接返回hostdump文件
+失败：没有找到对应的完整的文件返回 404,  "Not Found."
+
+9.请求创建B文件
+格式如下：
+"http://$ip:9000/lcc.php?operation=6"
+成功：返回"starting..."，只能说明正在创建B文件，不能说明B文件一定创建成功,如磁盘满。
+失败：只有lcc正在创建B文件的时候返回”busy”
+
+10.获取A,B,update_list文件
+格式如下：
+"http://$ip:9000/lcc.php?operation=7&name=$name"
+若获取A或B文件$name为具体文件名
+若获取干扰列表$name为reflector_list_update.txt
+返回值：
+成功：返回文件
+失败：文件格式不对返回"Get file form error:" + 文件名，请求文件不存在返回404 
+
+11.通过id查询ckey
+优酷版保留
+格式如下：
+"http://$ip:9000/lcc.php?operation= 8&ckey=$ckey&tb_name=data&id=$id"
+返回值：
+成功：返回ckey字符串，长度为32字节
+失败：没有找到返回”NULL”，程序执行失败返回”FAIL”
+
+13.使用Id插入curl
+优酷版保留
+格式如下：
+"http://$ip:9000/lcc.php?operation=9&wurl=$wurl&ckey=$ckey&curl=$curl&host=$host&size=$size&hash=$hash&tb_name=data&id=$id"
+返回值：
+返回值
+成功：返回”Successfully insert data into the database”
+失败：插入数据错误返回”exec insert sql failed .”，若数据库中已经存在返回”This wurl record has exist in the database”
+
+14.LCC_REQ_COUNT
+不支持
+
+15.检查A文件是否连续
+格式如下：
+"http://$ip:9000/lcc.php?operation=11&name=$name"
+返回值
+成功：返回”OK”
+失败：不连续返回”FAIL”，程序发送异常"EXCEPTION"
+
+16.查询资源文件大小
+格式如下：
+"http://$ip:9000/lcc.php?operation=12&curl=$curl&tb_name=data"
+返回值
+成功：返回资源大小
+失败：返回”Get FileSize Failed”开头字符串
+
+

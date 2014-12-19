@@ -1,0 +1,4 @@
+Install
+1. copy smartcc.init.d /etc/init.d/smartcc
+2. copy etc.smartcc to /etc/smartcc
+3. copy smartcc /usr/local/bin/
